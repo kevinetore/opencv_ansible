@@ -1,2 +1,3 @@
 ---
+- import_playbook: dotnet_prereqs.yml
 - import_playbook: face_detection_prereqs.yml

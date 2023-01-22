@@ -1,0 +1,58 @@
+---
+- hosts: all
+  become: true
+  vars:
+    home_path: "/home/face_kiosk"
+    dotnet_path: "/home/face_kiosk/installations"
+
+  tasks:
+  - name: Install developer and compile tools
+    apt: 
+      name:
+      - openssh-server
+      state: latest
+
+  - name: Create installations dir
+    file:
+      path: "{{ dotnet_path }}"
+      state: directory
+
+  - name: Download dotnet installer
+    get_url:
+      url: https://dot.net/v1/dotnet-install.sh
+      dest: "{{ dotnet_path }}"
+      mode: "+x"
+
+  - name: Execute the dotnet installer
+    command: "{{ dotnet_path }}/dotnet-install.sh"
+    register: dotnet_installer_execution
+
+  - name: Print dotnet installer execution result
+    debug:
+      msg: "{{ dotnet_installer_execution }}"
+
+  - name: Execute the dotnet installer with --version latest
+    command: "{{ dotnet_path }}/dotnet-install.sh --version latest"
+    register: dotnet_installer_version
+
+  - name: Print dotnet installer version result
+    debug:
+      msg: "{{ dotnet_installer_version }}"
+
+  - name: Execute the dotnet installer with --channel 
+    command: "{{ dotnet_path }}/dotnet-install.sh --channel 7.0"
+    register: dotnet_installer_channel
+
+  - name: Move .dotnet dir
+    command: mv /root/.dotnet {{ home_path }}/.local/bin/
+
+  - name: Print dotnet installer channel result
+    debug:
+      msg: "{{ dotnet_installer_channel }}"
+
+  - name: Add dotnet to .bashrc
+    lineinfile:
+      dest: "{{ home_path }}/.bashrc"
+      line: |
+        export DOTNET_ROOT=/home/face_kiosk/.local/bin/.dotnet
+        export PATH=$DOTNET_ROOT:$PATH
