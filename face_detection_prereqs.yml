@@ -1,9 +1,11 @@
 ---
 - hosts: all
-  become: yes
   vars:
     tmp_path: "{{ ansible_env.HOME }}/setup/download" 
     opencv_version: 4.7.0
+    python_packages:
+      - name: numpy
+      - name: dlib
 
   tasks:
   - name: Install developer and compile tools
@@ -14,6 +16,7 @@
       - git
       - pkg-config
       - unzip
+      - python3-dev
       state: latest
 
   - name: Create tmp download dir
@@ -21,23 +24,6 @@
       path: "{{ tmp_path }}"
       state: directory
 
-  - name: Download pip3 installer
-    get_url:
-      url: https://bootstrap.pypa.io/get-pip.py
-      dest: "{{ tmp_path }}"
-
-  - name: Get fqpn of installed pip3 dir
-    shell: pwd
-    args:
-      chdir: "{{ tmp_path }}"
-    register: pwd_result
-
-  - name: Install pip3
-    command: python3 {{ pwd_result.stdout }}/get-pip.py
-  
-  - name: Install numpy
-    command: "/usr/local/bin/pip install numpy"
-  
   - name: Download and unzip OpenCV
     unarchive:
       src: "https://github.com/opencv/opencv/archive/{{ opencv_version }}.zip"
@@ -68,48 +54,32 @@
       executable: /bin/bash
 
   - name: Compile the opencv project
-    shell: make -j 4
+    shell: make -j 2
     args:
       chdir: "{{ tmp_path }}/opencv-{{ opencv_version }}/build"
       executable: /bin/bash
 
-  - name: Register pwd for installation	
-    shell: pwd
-    args:
-      chdir: "{{ tmp_path }}"
-    register: pwd_result
-
   - name: Install opencv
-    become: true
     shell: |
       make install
       ldconfig
     args:
-      chdir: "{{ pwd_result.stdout }}/opencv-{{ opencv_version }}/build"
+      chdir: "{{ tmp_path }}/opencv-{{ opencv_version }}/build"
       executable: /bin/bash
 
-  # - name: Remove tmp dir
-  #   file:
-  #     state: absent
-  #     path: "{{ tmp_path }}"
-
-  - name: Test opencv installation
-    command: python3 -c "import cv2"
-    register: test_opencv_installation
-
-  - name: print test_opencv_installation output
-    debug:
-      msg: "{{ test_opencv_installation }}"
-
-  - name: Install Dlib with pip3
-    pip:
-      name: dlib
+  - name: Install python packages
+    python_pkg:
+      name: "{{ item.name }}"
       executable: pip3
+    with_items: "{{ python_packages }}"
+    notify:
+      - test python packages
 
-  - name: Test dlib installation
-    command: python3 -c "import dlib"
-    register: test_dlib_installation
+  - name: test python packages
+    command: python3 -c "import {{ item.name }}"
+    with_items: "{{ python_packages }}"
+    register: test_results
 
-  - name: print test_dlib_installation output
+  - name: print test results
     debug:
-      msg: "{{ test_dlib_installation }}"
+      msg: "{{ test_results }}"

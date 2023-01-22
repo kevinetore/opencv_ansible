@@ -1,17 +1,13 @@
 ---
 - hosts: all
-  become: true
   vars:
     home_path: "/home/face_kiosk"
     dotnet_path: "/home/face_kiosk/installations"
+    dotnet_installer_url: "https://dot.net/v1/dotnet-install.sh"
+    dotnet_installer_version: "latest"
+    dotnet_installer_channel: "7.0"
 
   tasks:
-  - name: Install developer and compile tools
-    apt: 
-      name:
-      - openssh-server
-      state: latest
-
   - name: Create installations dir
     file:
       path: "{{ dotnet_path }}"
@@ -19,40 +15,29 @@
 
   - name: Download dotnet installer
     get_url:
-      url: https://dot.net/v1/dotnet-install.sh
+      url: "{{ dotnet_installer_url }}"
       dest: "{{ dotnet_path }}"
       mode: "+x"
 
   - name: Execute the dotnet installer
-    command: "{{ dotnet_path }}/dotnet-install.sh"
+    command: >
+      {{ dotnet_path }}/dotnet-install.sh
+      --version {{ dotnet_installer_version }}
+      --channel {{ dotnet_installer_channel }}
     register: dotnet_installer_execution
-
-  - name: Print dotnet installer execution result
-    debug:
-      msg: "{{ dotnet_installer_execution }}"
-
-  - name: Execute the dotnet installer with --version latest
-    command: "{{ dotnet_path }}/dotnet-install.sh --version latest"
-    register: dotnet_installer_version
-
-  - name: Print dotnet installer version result
-    debug:
-      msg: "{{ dotnet_installer_version }}"
-
-  - name: Execute the dotnet installer with --channel 
-    command: "{{ dotnet_path }}/dotnet-install.sh --channel 7.0"
-    register: dotnet_installer_channel
+    notify:
+      - Move .dotnet dir
+      - Add dotnet to .bashrc
 
   - name: Move .dotnet dir
     command: mv /root/.dotnet {{ home_path }}/.local/bin/
-
-  - name: Print dotnet installer channel result
-    debug:
-      msg: "{{ dotnet_installer_channel }}"
+    when: dotnet_installer_execution.rc == 0
 
   - name: Add dotnet to .bashrc
     lineinfile:
       dest: "{{ home_path }}/.bashrc"
       line: |
-        export DOTNET_ROOT=/home/face_kiosk/.local/bin/.dotnet
+        export DOTNET_ROOT={{ home_path }}/.local/bin/.dotnet
         export PATH=$DOTNET_ROOT:$PATH
+      state: present
+      create: false
