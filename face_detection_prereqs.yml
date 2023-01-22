@@ -1,5 +1,6 @@
 ---
 - hosts: all
+  become: true
   vars:
     tmp_path: "{{ ansible_env.HOME }}/setup/download" 
     opencv_version: 4.7.0
@@ -68,18 +69,20 @@
       executable: /bin/bash
 
   - name: Install python packages
-    python_pkg:
+    pip:
       name: "{{ item.name }}"
       executable: pip3
     with_items: "{{ python_packages }}"
     notify:
       - test python packages
 
-  - name: test python packages
-    command: python3 -c "import {{ item.name }}"
-    with_items: "{{ python_packages }}"
-    register: test_results
+  handlers:
+    - name: test python packages
+      command: python3 -c "import {{ item.name }}"
+      with_items: "{{ python_packages }}"
+      register: test_results
+      notify: print test results
 
-  - name: print test results
-    debug:
-      msg: "{{ test_results }}"
+    - name: print test results
+      debug:
+        msg: "{{ test_results }}"

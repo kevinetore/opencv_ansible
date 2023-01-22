@@ -1,8 +1,9 @@
 ---
 - hosts: all
+  become: true
   vars:
-    home_path: "/home/face_kiosk"
-    dotnet_path: "/home/face_kiosk/installations"
+    home_path: "/home/odroid"
+    dotnet_path: "/home/odroid/installations"
     dotnet_installer_url: "https://dot.net/v1/dotnet-install.sh"
     dotnet_installer_version: "latest"
     dotnet_installer_channel: "7.0"
@@ -26,18 +27,20 @@
       --channel {{ dotnet_installer_channel }}
     register: dotnet_installer_execution
     notify:
-      - Move .dotnet dir
+      - Move .dotnet dir, ignore on existence
       - Add dotnet to .bashrc
 
-  - name: Move .dotnet dir
-    command: mv /root/.dotnet {{ home_path }}/.local/bin/
-    when: dotnet_installer_execution.rc == 0
+  handlers:
+    - name: Move .dotnet dir, ignore on existence
+      command: mv /root/.dotnet {{ home_path }}/.local/bin/
+      when: dotnet_installer_execution.rc == 0
+      ignore_errors: true
 
-  - name: Add dotnet to .bashrc
-    lineinfile:
-      dest: "{{ home_path }}/.bashrc"
-      line: |
-        export DOTNET_ROOT={{ home_path }}/.local/bin/.dotnet
-        export PATH=$DOTNET_ROOT:$PATH
-      state: present
-      create: false
+    - name: Add dotnet to .bashrc
+      lineinfile:
+        dest: "{{ home_path }}/.bashrc"
+        line: |
+          export DOTNET_ROOT={{ home_path }}/.local/bin/.dotnet
+          export PATH=$DOTNET_ROOT:$PATH
+        state: present
+        create: false
