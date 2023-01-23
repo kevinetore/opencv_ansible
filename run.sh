@@ -13,5 +13,8 @@ if ! command -v ansible > /dev/null; then
     source ~/.bashrc
 fi
 
+# Quick way to test dlib globally
+echo "export PYTHONPATH='/usr/local/lib/python3.8/dist-packages/:/home/odroid/setup/download/dlib-19.24'" >> ~/.bashrc
+
 ansible-playbook -i hosts playbook.yml --ask-become-pass
 source ~/.bashrc
