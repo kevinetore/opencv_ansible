@@ -13,8 +13,12 @@ if ! command -v ansible > /dev/null; then
     source ~/.bashrc
 fi
 
-# Quick way to test opencv and dlib globally
-echo "export PYTHONPATH='/usr/local/lib/python3.8/dist-packages/:/home/odroid/setup/download/dlib-19.24:/usr/local/lib/python3.8/site-packages/'" >> ~/.bashrc
+path_string="'/usr/local/lib/python3.8/dist-packages/:\
+/home/odroid/setup/download/dlib-19.24:\
+/usr/local/lib/python3.8/site-packages/'" 
+if ! grep -q "PYTHONPATH='$path_string'" ~/.bashrc; then
+    echo "export PYTHONPATH='$path_string'" >> ~/.bashrc
+fi
 
 ansible-playbook -i hosts playbook.yml --ask-become-pass
 source ~/.bashrc
