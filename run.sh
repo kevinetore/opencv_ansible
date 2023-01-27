@@ -14,7 +14,6 @@ if ! command -v ansible > /dev/null; then
 fi
 
 path_string="'/usr/local/lib/python3.8/dist-packages/:\
-/home/odroid/setup/download/dlib-19.24:\
 /usr/local/lib/python3.8/site-packages/'" 
 if ! grep -q "PYTHONPATH='$path_string'" ~/.bashrc; then
     echo "export PYTHONPATH='$path_string'" >> ~/.bashrc
