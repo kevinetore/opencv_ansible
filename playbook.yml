@@ -1,6 +1,3 @@
 ---
-- import_playbook: dotnet_prereqs.yml
-  ignore_errors: true
-
 - import_playbook: face_detection_prereqs.yml
   ignore_errors: true
