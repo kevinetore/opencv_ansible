@@ -19,5 +19,9 @@ if ! grep -q "PYTHONPATH='$path_string'" ~/.bashrc; then
     echo "export PYTHONPATH='$path_string'" >> ~/.bashrc
 fi
 
+if ! grep -q "export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python" ~/.bashrc; then
+    echo "export PROTOCOL_BUFFERS_PYTHON_IMPLEMENTATION=python" >> ~/.bashrc
+fi
+
 ansible-playbook -i hosts playbook.yml --ask-become-pass
 source ~/.bashrc
