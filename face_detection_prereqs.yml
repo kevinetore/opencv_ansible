@@ -5,22 +5,8 @@
     tmp_path: "/home/odroid/setup/download" 
     opencv_version: 4.7.0
     python_packages:
-      - name: numpy
-        version: 1.24.1
-      - name: mediapipe
-        version: 0.9.2.1
-      - name: grpcio
-        version: 1.53.0
-      - name: grpcio-tools
-        version: 1.53.0
-      - name: numpy
-        version: 1.24.2
-      - name: pyudev
-        version: 0.24.0
-      - name: psutil
-        version: 5.9.4
-      - name: np
-        version: 1.0.2
+      - name: opencv-python
+        version: latest
 
   tasks:
   - name: Check if swapfile exists
@@ -72,16 +58,15 @@
     with_items: "{{ python_packages }}"
     notify:
       - test python packages
+      
+  - name: Install mediapipe
+    pip: 
+      name: "mediapipe-rpi4"
+      executable: pip3
 
   - name: Download and unzip OpenCV
     unarchive:
       src: "https://github.com/opencv/opencv/archive/{{ opencv_version }}.zip"
-      dest: "{{ tmp_path }}"
-      copy: no
-
-  - name: Download and unzip OpenCV contrib
-    unarchive:
-      src: "https://github.com/opencv/opencv_contrib/archive/{{ opencv_version }}.zip"
       dest: "{{ tmp_path }}"
       copy: no
 
@@ -101,24 +86,11 @@
       -D WITH_NEON=ON \
       -D INSTALL_C_EXAMPLES=OFF \
       -D INSTALL_PYTHON_EXAMPLES=OFF \
-      -D OPENCV_EXTRA_MODULES_PATH={{ tmp_path }}/opencv_contrib-{{ opencv_version }}/modules \
       -D BUILD_EXAMPLES=ON {{ tmp_path }}/opencv-{{ opencv_version }}
     args:
       chdir: "{{ tmp_path }}/opencv-{{ opencv_version }}/build"
       executable: /bin/bash
 
-  - name: Compile the opencv project
-    shell: make -j 6
-    args:
-      chdir: "{{ tmp_path }}/opencv-{{ opencv_version }}/build"
-      executable: /bin/bash
-
-  - name: Install opencv
-    shell: |
-      make install
-      ldconfig
-    args:
-      chdir: "{{ tmp_path }}/opencv-{{ opencv_version }}/build"
   - name: Disable the swapfile
     command: swapoff -av
 
